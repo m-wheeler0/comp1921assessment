@@ -6,32 +6,51 @@ iteration over each character.*/
 
 typedef struct
 {
+    /*Inspiration for representing the coord as a struct came from the code skeleton template provided*/
+    int x;
+    int y;
+}coord;
+
+typedef struct
+{
     int rows;
     int columns;
-    FILE *mazeFile;
+    char maze[100][100];
+    coord start;
+    coord end;
 }maze_map;
 
-int validation(FILE *fileName){
-    bool valid = true;
-
+char[] validation(char[] filename){
     /*In this function, the file which is imported is then iterated through, going through
     multiple checks to make sure the maze file is valid (row/column limits, invalid
-    characters etc...)
-    
-    If it is successful, it should return two values for the number of rows and columns of the
-    file, allowing easier iteration for a coordinate system.*/
+    characters etc...)*/
+    FILE *pFile;
+    pFile = fopen(filename, "r");
 
-    return columns;
-    return rows;
-
+    bool valid = true;
 }
 
 bool checkMove(){
     /*This function gets a user input, and then looks at the 'coordinate' the user
     wants to move to, it then checks the character stored in that,
     If it is '#', reject the input,
-    If it is an 'E', congratulate the user and end the maze,
-    If it is a ' ', allow the player to move there.*/
+    If it is a ' ', allow the player to move there*/
+}
+
+bool checkWin(){
+    /*This function looks at the character in the maze that the user currently resides at,
+    if it is an E; the user wins returning True. Otherwise return False and continue to ask for user inputs*/
+}
+
+void executeMove(){
+    /*This function is ran if checkMove registers the user input as a valid input, it will go to the direction the user
+    intends either going up into the previous line or to the next character and overwrite it, making sure to overwrite the
+    original player position with a space " " to not remove characters and keep its rows and columns consistent*/
+
+}
+
+void printMaze(){
+    /*This function prints the maze when the user inputs an "M"*/
 }
 
 /*All functions and structs defined will likely be in a header file when I am finshing the
