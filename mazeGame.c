@@ -20,12 +20,27 @@ typedef struct
     coord end;
 }maze_map;
 
-char[] validation(char[] filename){
+//void fileOpener(char[] filename){
+    /*In this function, the file is opened and read through, before being returned as an array of characters*/
+    //char[100] line;
+    //char[100][100] array;
+
+    //FILE *pFile;
+    //pFile = fopen(line, filename, "r");
+    //int looper = 0;
+    
+    //while(fgets(line, 101, pFile)){
+        //strdup(array[looper], line);
+        //looper ++;
+    //};
+
+    //fclose(pFile);
+//}
+
+char* validation(){
     /*In this function, the file which is imported is then iterated through, going through
     multiple checks to make sure the maze file is valid (row/column limits, invalid
     characters etc...)*/
-    FILE *pFile;
-    pFile = fopen(filename, "r");
 
     bool valid = true;
 }
@@ -56,6 +71,7 @@ void printMaze(){
 /*All functions and structs defined will likely be in a header file when I am finshing the
 program.*/
 
+
 int main(){
 
     /*The main function in this code will ask the user to input the filename, and then validate that
@@ -63,5 +79,7 @@ int main(){
 
     /*The main function then processes user inputs and validates them by calling upon the previous function*/
 
-    return 0;
+    int a = 5;
+    
+    printf("%d\n", *&a);
 }
