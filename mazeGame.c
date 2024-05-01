@@ -46,11 +46,11 @@ char** validation(char filename[]){
 
         //A second loop returns the number of rows in the file.
         fseek(pFile, 0, SEEK_SET);
-        char tempString[charCount]; 
+        char tempString[charCount + 1]; 
         int rowCount = 0;
         /*We must use tempString + 2 as a parameter to accomodate for
         newline and null characters*/
-        while(fgets(tempString, sizeof(tempString) + 2, pFile) != NULL){
+        while((fgets(tempString, sizeof(tempString), pFile)) != NULL){
             rowCount++;
             printf("%s", tempString);
         }
@@ -82,7 +82,7 @@ char** validation(char filename[]){
                     char** pArray = malloc(sizeof(char*) * rowCount);
 
                     for(int i = 0; i < rowCount; i++){
-                        *(pArray + i) = fgets(tempString, sizeof(tempString) + 2, pFile);
+                        *(pArray + i) = fgets(tempString, sizeof(tempString), pFile);
                     }
 
                     return pArray;
@@ -135,6 +135,9 @@ int main(){
 
     /*The main function then processes user inputs and validates them by calling upon the previous function*/
 
+
+    char strTest[11] = "Hello World";
+    printf("%s", strTest);
     validation("testmaze.txt");
     validation("testmaze2.txt");
 
