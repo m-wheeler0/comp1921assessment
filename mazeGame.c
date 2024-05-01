@@ -29,10 +29,11 @@ char** validation(char filename[]){
     FILE *pFile = fopen(filename, "r");
     /*FIRST Check if the file is a valid file*/
 
+    char c;
+
     if (pFile == NULL){
-        printf("Unable to open file\n.");
-        fclose(pFile);
-        exit(0);
+        printf("Unable to open file.\n");
+        exit(1);
     }
     else
     {
@@ -50,52 +51,48 @@ char** validation(char filename[]){
         int rowCount = 0;
         /*We must use tempString + 2 as a parameter to accomodate for
         newline and null characters*/
-        while((fgets(tempString, sizeof(tempString), pFile)) != NULL){
-            rowCount++;
-            printf("%s", tempString);
-        }
 
-        /*THIRD Make sure the number of characters in said file is consistent
+        while((fgets(tempString, sizeof(tempString) + 1, pFile)) != NULL){
+                rowCount++;
+            }
+            /*THIRD Make sure the number of characters in said file is consistent
         with it's dimensions (make sure it is a square or rectangle)*/
         fseek(pFile, 0, SEEK_SET);
         int xCharacters = (charCount * rowCount) + (rowCount - 1);
         int actCharacters = 0;
         /*invalidCharacter will be used as a pseudo boolean to return whether
         there are any invalid characters in the text file*/
-        int invalidCharacter = 0;
 
-        char ch = fgetc(pFile);
-        while(ch != EOF){
+        while((c = fgetc(pFile)) != EOF){
             actCharacters++;
             /*It would be better here to check if any of the characters do not match the allowed
             characters stated by the assignment {" ", "S", "E", "#"}, since we are checking every
             character anyway.*/
-            if(ch != ' ' && ch != 'S' && ch != 'E' && ch != '#'){
+            if(c != ' ' && c != 'S' && c != 'E' && c != '#' && c!='\n'){
                 printf("Invalid character found.");
                 fclose(pFile);
-                exit(0);
+                exit(1);
                 }
             }
 
-            if (actCharacters == xCharacters){
-                    fseek(pFile, 0, SEEK_SET);
-                    char** pArray = malloc(sizeof(char*) * rowCount);
+        if (actCharacters == xCharacters){
+            fseek(pFile, 0, SEEK_SET);
+            char** pArray = (char**) malloc(sizeof(char*) * rowCount);
 
-                    for(int i = 0; i < rowCount; i++){
-                        *(pArray + i) = fgets(tempString, sizeof(tempString), pFile);
-                    }
+            for(int i = 0; i < rowCount; i++){
+                *(pArray + i) = fgets(tempString, sizeof(tempString), pFile);
+            }
 
-                    return pArray;
-                 }
-                else{
-                    printf("Invalid maze file was inputted\n");
-                    fclose(pFile);
-                    exit(0);
-                    }
+            return pArray;
+            }
+        else{
+            printf("Invalid maze file was inputted\n");
+            fclose(pFile);
+            exit(1);
+            }
         }
-
-        fclose(pFile);
 }
+
 
 maze_map mapBuilder(){
 
@@ -135,11 +132,7 @@ int main(){
 
     /*The main function then processes user inputs and validates them by calling upon the previous function*/
 
-
-    char strTest[11] = "Hello World";
-    printf("%s", strTest);
-    validation("testmaze.txt");
-    validation("testmaze2.txt");
+    printf("%p", validation("valid/reg_5x5.txt"));
 
     return 0;
 }
