@@ -2,6 +2,9 @@
 #include<stdlib.h>
 #include<string.h>
 
+#define MAX_DIMENSION_VALUE 100
+#define MIN_DIMENSION_VALUE 5
+
 /*Each maze map will be stored within this struct, showing rows, columns allowing for easier
 iteration over each character.*/
 
@@ -16,7 +19,7 @@ typedef struct
 {
     int rows;
     int columns;
-    char maze[100][100];
+    char** maze;
     coord start;
     coord end;
 }maze_map;
@@ -33,7 +36,7 @@ char** validation(char filename[]){
 
     if (pFile == NULL){
         printf("Unable to open file.\n");
-        exit(1);
+        exit(2);
     }
     else
     {
@@ -71,11 +74,21 @@ char** validation(char filename[]){
             if(c != ' ' && c != 'S' && c != 'E' && c != '#' && c!='\n'){
                 printf("Invalid character found.");
                 fclose(pFile);
-                exit(1);
+                exit(3);
                 }
             }
 
-        if (actCharacters == xCharacters){
+        /*The final check to do before returning the 2D Array of characters is to make sure the dimensions
+        are within bounds > 5 AND < 100 for both.*/
+
+        if((rowCount < MIN_DIMENSION_VALUE) || (rowCount > MAX_DIMENSION_VALUE)
+        ||(charCount < MIN_DIMENSION_VALUE) || (charCount > MAX_DIMENSION_VALUE)){
+            printf("Maze dimensions go outside boundaries (5 <= d <= 100)");
+            fclose(pFile);
+            exit(3);
+        }
+        else{
+            if (actCharacters == xCharacters){
             fseek(pFile, 0, SEEK_SET);
             char** pArray = (char**) malloc(sizeof(char*) * rowCount);
 
@@ -86,11 +99,13 @@ char** validation(char filename[]){
             return pArray;
             }
         else{
-            printf("Invalid maze file was inputted\n");
+            printf("Invalid maze file was inputted, make sure it is square or rectangular.\n");
             fclose(pFile);
-            exit(1);
+            exit(3);
             }
         }
+    }
+
 }
 
 
@@ -125,14 +140,23 @@ void printMaze(){
 program.*/
 
 
-int main(){
+int main(int argc, char* argv[]){
 
     /*The main function in this code will ask the user to input the filename, and then validate that
     by calling upon the previous function*/
 
     /*The main function then processes user inputs and validates them by calling upon the previous function*/
-
-    printf("%p", validation("valid/reg_5x5.txt"));
+    if (argc == 1){
+        printf("Too few arguments");
+        exit(1);
+    }
+    else if (argc == 2){
+        char** mapArray = validation(argv[1]);
+    }
+    else{
+        printf("Too many arguments");
+        exit(1);
+    }
 
     return 0;
 }
