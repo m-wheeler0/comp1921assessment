@@ -1,5 +1,6 @@
 #include<stdio.h>
 #include<stdbool.h>
+#include<string.h>
 
 /*Each maze map will be stored within this struct, showing rows, columns allowing for easier
 iteration over each character.*/
@@ -20,29 +21,35 @@ typedef struct
     coord end;
 }maze_map;
 
-//void fileOpener(char[] filename){
-    /*In this function, the file is opened and read through, before being returned as an array of characters*/
-    //char[100] line;
-    //char[100][100] array;
-
-    //FILE *pFile;
-    //pFile = fopen(line, filename, "r");
-    //int looper = 0;
-    
-    //while(fgets(line, 101, pFile)){
-        //strdup(array[looper], line);
-        //looper ++;
-    //};
-
-    //fclose(pFile);
-//}
-
-char* validation(){
+void validation(char filename[]){
     /*In this function, the file which is imported is then iterated through, going through
     multiple checks to make sure the maze file is valid (row/column limits, invalid
     characters etc...)*/
 
-    bool valid = true;
+    FILE *pFile = fopen(filename, "r");
+    /*FIRST Check if the file is a valid file*/
+
+    if (pFile == NULL){
+        printf("Unable to open file\n.");
+    }
+    else
+    {
+        //SECOND Find out the dimensions of the file
+
+        //This loop returns the number of columns in the file.
+    int charCount = 0;
+    while(fgetc(pFile) != '\n'){
+        charCount += 1;
+    }
+
+        //A second loop returns the number of rows in the file.
+
+        /*THIRD Make sure the number of characters in said file is consistent
+         with it's dimensions (make sure it is a square or rectangle)*/
+
+         /*FOURTH Make sure all characters within the maze are valid characters*/
+    }
+
 }
 
 bool checkMove(){
@@ -79,7 +86,5 @@ int main(){
 
     /*The main function then processes user inputs and validates them by calling upon the previous function*/
 
-    int a = 5;
-    
-    printf("%d\n", *&a);
+    validation("testmaze.txt");
 }
