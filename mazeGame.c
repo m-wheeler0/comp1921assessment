@@ -24,7 +24,7 @@ typedef struct
     coord end;
 }maze_map;
 
-char** validation(char filename[]){
+maze_map validation(char filename[]){
     /*In this function, the file which is imported is then iterated through, going through
     multiple checks to make sure the maze file is valid (row/column limits, invalid
     characters etc...)*/
@@ -52,7 +52,7 @@ char** validation(char filename[]){
         fseek(pFile, 0, SEEK_SET);
         char tempString[charCount + 1]; 
         int rowCount = 0;
-        /*We must use tempString + 2 as a parameter to accomodate for
+        /*We must use tempString + 1 as a parameter to accomodate for
         newline and null characters*/
 
         while((fgets(tempString, sizeof(tempString) + 1, pFile)) != NULL){
@@ -61,7 +61,6 @@ char** validation(char filename[]){
             /*THIRD Make sure the number of characters in said file is consistent
         with it's dimensions (make sure it is a square or rectangle)*/
         fseek(pFile, 0, SEEK_SET);
-        int xCharacters = (charCount * rowCount) + (rowCount - 1);
         int actCharacters = 0;
         /*invalidCharacter will be used as a pseudo boolean to return whether
         there are any invalid characters in the text file*/
@@ -88,15 +87,26 @@ char** validation(char filename[]){
             exit(3);
         }
         else{
-            if (actCharacters == xCharacters){
+            if (actCharacters == ((charCount * rowCount) + (rowCount - 1))){
             fseek(pFile, 0, SEEK_SET);
             char** pArray = (char**) malloc(sizeof(char*) * rowCount);
 
             for(int i = 0; i < rowCount; i++){
-                *(pArray + i) = fgets(tempString, sizeof(tempString), pFile);
+                pArray[i] = (char*) malloc(sizeof(char) * (charCount + 1));
+                fgets(tempString, sizeof(tempString) + 1, pFile);
+                strcpy(pArray[i], tempString);
             }
 
-            return pArray;
+            /*Create a maze_map structure, passing the start and end coords as default values of 0,0
+            We will change these values later in the mapBuilder function.*/
+            maze_map mazeMap;
+            mazeMap.rows = rowCount;
+            mazeMap.columns = charCount;
+            mazeMap.maze = pArray;
+            mazeMap.start.x = mazeMap.start.y = 0;
+            mazeMap.end.x = mazeMap.end.y = 0;
+
+            return mazeMap;
             }
         else{
             printf("Invalid maze file was inputted, make sure it is square or rectangular.\n");
@@ -105,12 +115,24 @@ char** validation(char filename[]){
             }
         }
     }
-
 }
 
 
-maze_map mapBuilder(){
-
+maze_map mapBuilder(maze_map mazeMap){
+    /*All this function should do is iterate through every character in the 2D
+    Char array until it finds an S and the same with the E*/
+    for (int y = 0; y < mazeMap.rows; y++){
+        for(int x = 0; x < mazeMap.columns; x++){
+            if (mazeMap.maze[y][x] == 'S'){
+                mazeMap.start.x = x;
+                mazeMap.start.y = y;
+            }
+            else if (mazeMap.maze[y][x] == 'E'){
+                mazeMap.end.x = x;
+                mazeMap.end.y = y;
+            }
+        }
+    }
 }
 
 void checkMove(){
@@ -151,7 +173,10 @@ int main(int argc, char* argv[]){
         exit(1);
     }
     else if (argc == 2){
-        char** mapArray = validation(argv[1]);
+        maze_map mazeMap = validation(argv[1]);
+        char** mazeMap.maze = comparisonMaze; 
+        mapBuilder(mazeMap);
+        free(mazeMap.maze);
     }
     else{
         printf("Too many arguments");
