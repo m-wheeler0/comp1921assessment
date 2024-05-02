@@ -1,6 +1,6 @@
-#include<stdio.h>
-#include<stdlib.h>
-#include<string.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #define MAX_DIMENSION_VALUE 100
 #define MIN_DIMENSION_VALUE 5
@@ -24,6 +24,10 @@ typedef struct
     coord end;
 }maze_map;
 
+int errorReturn(int i){
+    return i;
+}
+
 maze_map validation(char filename[]){
     /*In this function, the file which is imported is then iterated through, going through
     multiple checks to make sure the maze file is valid (row/column limits, invalid
@@ -33,10 +37,12 @@ maze_map validation(char filename[]){
     /*FIRST Check if the file is a valid file*/
 
     char c;
+    int trailing;
+    int actCharacters;
 
     if (pFile == NULL){
         printf("Unable to open file.\n");
-        exit(2);
+        errorReturn(2);
     }
     else
     {
@@ -56,24 +62,43 @@ maze_map validation(char filename[]){
         newline and null characters*/
 
         while((fgets(tempString, sizeof(tempString) + 1, pFile)) != NULL){
-                rowCount++;
-            }
-            /*THIRD Make sure the number of characters in said file is consistent
+            rowCount++;
+        }
+
+        // Check if the last character is a new line and accomodate the rowCount if it is:
+        fseek(pFile, -1, SEEK_END);
+        c = fgetc(pFile);
+
+        if(c == '\n'){
+            trailing = 1;
+        }
+        else{
+            trailing = 0;
+        }
+
+        /*THIRD Make sure the number of characters in said file is consistent
         with it's dimensions (make sure it is a square or rectangle)*/
         fseek(pFile, 0, SEEK_SET);
-        int actCharacters = 0;
+        if (trailing == 0){
+            actCharacters = 0;
+        }
+        else{
+            actCharacters = -1;
+        }
         /*invalidCharacter will be used as a pseudo boolean to return whether
         there are any invalid characters in the text file*/
 
         while((c = fgetc(pFile)) != EOF){
-            actCharacters++;
             /*It would be better here to check if any of the characters do not match the allowed
             characters stated by the assignment {" ", "S", "E", "#"}, since we are checking every
             character anyway.*/
-            if(c != ' ' && c != 'S' && c != 'E' && c != '#' && c!='\n'){
+            if(c != ' ' && c != 'S' && c != 'E' && c != '#' && c != '\n' && c != '\0'){
                 printf("Invalid character found.");
                 fclose(pFile);
-                exit(3);
+                errorReturn(3);
+                }
+                else{
+                    actCharacters++;
                 }
             }
 
@@ -82,9 +107,9 @@ maze_map validation(char filename[]){
 
         if((rowCount < MIN_DIMENSION_VALUE) || (rowCount > MAX_DIMENSION_VALUE)
         ||(charCount < MIN_DIMENSION_VALUE) || (charCount > MAX_DIMENSION_VALUE)){
-            printf("Maze dimensions go outside boundaries (5 <= d <= 100)");
+            printf("Maze dimensions go outside boundaries ( 5 <= d <= 100 )\n");
             fclose(pFile);
-            exit(3);
+            errorReturn(3);
         }
         else{
             if (actCharacters == ((charCount * rowCount) + (rowCount - 1))){
@@ -95,6 +120,13 @@ maze_map validation(char filename[]){
                 pArray[i] = (char*) malloc(sizeof(char) * (charCount + 1));
                 fgets(tempString, sizeof(tempString) + 1, pFile);
                 strcpy(pArray[i], tempString);
+            }
+
+            /*Check the last character in the array, if it is a newline character (\n), then
+            remove it*/
+
+            if (pArray[rowCount - 1][charCount - 1] == '\n'){
+                pArray[rowCount - 1][charCount - 1] = '\0';
             }
 
             /*Create a maze_map structure, passing the start and end coords as default values of 0,0
@@ -111,56 +143,172 @@ maze_map validation(char filename[]){
         else{
             printf("Invalid maze file was inputted, make sure it is square or rectangular.\n");
             fclose(pFile);
-            exit(3);
+            errorReturn(3);
             }
         }
     }
 }
 
-
-maze_map mapBuilder(maze_map mazeMap){
+coord mapBuilder(maze_map map, coord player){
     /*All this function should do is iterate through every character in the 2D
     Char array until it finds an S and the same with the E*/
-    for (int y = 0; y < mazeMap.rows; y++){
-        for(int x = 0; x < mazeMap.columns; x++){
-            if (mazeMap.maze[y][x] == 'S'){
-                mazeMap.start.x = x;
-                mazeMap.start.y = y;
+
+    /*It should then set the coordinates of the player to the start coordinates of the map*/
+    for (int y = 0; y < map.rows; y++){
+        for(int x = 0; x < map.columns; x++){
+            if (map.maze[y][x] == 'S'){
+                map.start.x = x;
+                map.start.y = y;
             }
-            else if (mazeMap.maze[y][x] == 'E'){
-                mazeMap.end.x = x;
-                mazeMap.end.y = y;
+            else if (map.maze[y][x] == 'E'){
+                map.end.x = x;
+                map.end.y = y;
             }
         }
     }
+
+    player.x = map.start.x;
+    player.y = map.start.y;
+
+    return player;
 }
 
-void checkMove(){
+void printMaze(maze_map map, coord player){
+    /*This function prints the maze when the user inputs an "M"
+    It should print the entire maze replacing the player position with an 'X'*/
+    printf("\n");
+    for(int i = 0; i < map.rows; i++){
+        if (i == player.y){
+            for(int j = 0; j <= map.columns; j++){
+                if (j == player.x){
+                    printf("%c",'X');
+                }
+                else{
+                    printf("%c", map.maze[i][j]);
+                }
+            }
+        }
+        else
+        {
+            printf("%s", map.maze[i]);
+        }
+    }
+    printf("\n");
+}
+
+int checkMove(maze_map map, coord player, char userInput){
     /*This function gets a user input, and then looks at the 'coordinate' the user
     wants to move to, it then checks the character stored in that,
-    If it is '#', reject the input,
+    If it is '#', or a new line or EOF, inform the user and reject the input,
     If it is a ' ', allow the player to move there*/
+
+    //This variable stores the character it wants to move to
+    char futurePos;
+
+    /*If the user wants to move up, make sure it is not into the wall nor the end of a line,
+    nor the end of the file, nor are they at the top of the file (at map[0][n]
+    where n is any integer value)*/
+
+    if (userInput == 'W' || userInput == 'w'){
+        futurePos = map.maze[player.y - 1][player.x];
+
+        if(futurePos == '#'){
+            printf("Cannot move into a wall");
+        }
+        else if(futurePos == '\n'|| futurePos == '\0' || player.y == 0){
+            printf("Attempting to move out of bounds");
+        }
+        else if (futurePos == ' '){
+            player.y = player.y - 1;
+            return 0;
+        }
+        else if (futurePos == 'E'){
+            printf("Congratulations, you completed the maze!");
+            //Return the value 1 on completion of the maze
+            return 1;
+        }
+    }
+
+    /*If the user wants to move left, make sure it is not into a wall nor the start of a line,
+    nor are they at the leftmost side of the file (at map[n][0] where n is any
+    integer value)*/
+
+    else if (userInput == 'A' || userInput == 'a'){
+        futurePos = map.maze[player.y][player.x - 1];
+        
+        if(futurePos == '#'){
+            printf("Cannot move into a wall\n");
+        }
+        else if(futurePos == '\n'|| futurePos == '\0' || player.x == 0){
+            printf("Attempting to move out of bounds\n");
+        }
+        else if (futurePos == ' '){
+            player.y = player.y - 1;
+            return 0;
+        }
+        else if (futurePos == 'E'){
+            printf("Congratulations, you completed the maze!\n");
+            //Return the value 1 on completion of the maze
+            return 1;
+        }
+    }
+
+    /*If the user wants to move down, make sure it is not into the wall,
+    nor are they at the top of the file (at map[LAST_ROW][n] where n is any integer value)*/
+
+    else if (userInput == 'S' || userInput == 's'){
+        futurePos = map.maze[player.y + 1][player.x];
+        
+        if(futurePos == '#'){
+            printf("Cannot move into a wall");
+        }
+        else if(futurePos == '\n'|| futurePos == '\0' || player.x == (map.rows - 1)){
+            printf("Attempting to move out of bounds");
+        }
+        else if (futurePos == ' '){
+            player.y = player.y - 1;
+            return 0;
+        }
+        else if (futurePos == 'E'){
+            printf("Congratulations, you completed the maze!");
+            //Return the value 1 on completion of the maze
+            return 1;
+    }
+
+    /*If the user wants to move right, make sure it is not into the wall,
+    nor are they at the rightmost of the file (at map[n][LAST_COLUMN] where n is any integer value)*/
+
+    else if (userInput == 'D' || userInput == 'd'){
+        futurePos = map.maze[player.y][player.x + 1];
+        
+        if(futurePos == '#'){
+            printf("Cannot move into a wall");
+        }
+        else if(futurePos == '\n'|| futurePos == '\0' || player.x == (map.columns - 1)){
+            printf("Attempting to move out of bounds");
+        }
+        else if (futurePos == ' '){
+            player.y = player.y - 1;
+            return 0;
+        }
+        else if (futurePos == 'E'){
+            printf("Congratulations, you completed the maze!");
+            //Return the value 1 on completion of the maze
+            return 1;
+        }
+    }
+
+    else if (userInput == 'M' || userInput == 'm'){
+        printMaze(map, player);
+    }
+    else if (userInput == 'q' || userInput == 'Q'){
+        exit(0);
+    }
+    else{
+        printf("Invalid input.");
+        }
+    }
 }
-
-void checkWin(){
-    /*This function looks at the character in the maze that the user currently resides at,
-    if it is an E; the user wins returning True. Otherwise return False and continue to ask for user inputs*/
-}
-
-void executeMove(){
-    /*This function is ran if checkMove registers the user input as a valid input, it will go to the direction the user
-    intends either going up into the previous line or to the next character and overwrite it, making sure to overwrite the
-    original player position with a space " " to not remove characters and keep its rows and columns consistent*/
-
-}
-
-void printMaze(){
-    /*This function prints the maze when the user inputs an "M"*/
-}
-
-/*All functions and structs defined will likely be in a header file when I am finshing the
-program.*/
-
 
 int main(int argc, char* argv[]){
 
@@ -170,17 +318,26 @@ int main(int argc, char* argv[]){
     /*The main function then processes user inputs and validates them by calling upon the previous function*/
     if (argc == 1){
         printf("Too few arguments");
-        exit(1);
+        errorReturn(1);
     }
     else if (argc == 2){
         maze_map mazeMap = validation(argv[1]);
-        char** mazeMap.maze = comparisonMaze; 
-        mapBuilder(mazeMap);
+        coord playerChar;
+        char input = 'M';
+
+        playerChar = mapBuilder(mazeMap, playerChar);
+
+        while (checkMove(mazeMap, playerChar, input) != 1){
+            printMaze(mazeMap, playerChar);
+            printf("\nWhat move would you like to make?: ");
+            scanf(" %c", &input);
+        }
+
         free(mazeMap.maze);
     }
     else{
         printf("Too many arguments");
-        exit(1);
+        errorReturn(1);
     }
 
     return 0;
