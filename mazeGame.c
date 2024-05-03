@@ -10,32 +10,32 @@ iteration over each character.*/
 
 typedef struct
 {
-    /*Inspiration for representing the coord as a struct came from the code skeleton template provided*/
+    /*Inspiration for representing the Coord as a struct came from the code skeleton template provided*/
     int x;
     int y;
-}coord;
+}Coord;
 
 typedef struct
 {
     int rows;
     int columns;
     char** maze;
-    coord start;
-    coord end;
-}maze_map;
+    Coord start;
+    Coord end;
+}MazeMap;
 
 typedef struct
 {
     int rows;
     int columns;
-}dimensions;
+}Dimensions;
 
-/*Validation function, gets the filename as a string and a reference to a dimensions struct which
+/*Validation function, gets the filename as a string and a reference to a Dimensions struct which
 will be edited within the function for use in other functions
 
 Puts the file through multiple checks to ensure the maze is valid*/
 
-int validation(char filename[], dimensions* fileDimensions){
+int validation(char filename[], Dimensions* fileDimensions){
     /*In this function, the file which is imported is then iterated through, going through
     multiple checks to make sure the maze file is valid (row/column limits, invalid
     characters etc...)*/
@@ -55,7 +55,7 @@ int validation(char filename[], dimensions* fileDimensions){
     }
     else
     {
-        //First find out the dimensions of the file
+        //First find out the Dimensions of the file
 
         //This loop returns the number of columns in the file.
         fseek(pFile, 0, SEEK_SET);
@@ -124,7 +124,7 @@ int validation(char filename[], dimensions* fileDimensions){
         }
 
 
-        /*The final check to do before returning the 2D Array of characters is to make sure the dimensions
+        /*The final check to do before returning the 2D Array of characters is to make sure the Dimensions
         are within bounds > 5 AND < 100 for both.*/
 
         if((rowCount < MIN_DIMENSION_VALUE) || (rowCount > MAX_DIMENSION_VALUE)
@@ -133,7 +133,7 @@ int validation(char filename[], dimensions* fileDimensions){
         }
         else{
             /*Make sure the number of characters in said file is consistent
-            with it's dimensions (make sure it is a square or rectangle)*/
+            with it's Dimensions (make sure it is a square or rectangle)*/
 
             if (actCharacters == ((charCount * rowCount) + (rowCount - 1))){
                 return 0;
@@ -146,10 +146,10 @@ int validation(char filename[], dimensions* fileDimensions){
 }
 
 /*Read the file, and store it into a two dimensional array of characters like a grid
-return a maze_map struct of the maze containing rows, columns and default coord structs for the
+return a MazeMap struct of the maze containing rows, columns and default Coord structs for the
 start and end characters to be operated on in the mapBuilder function*/
 
-maze_map fileToArray(char filename[], dimensions fileDimensions){
+MazeMap fileToArray(char filename[], Dimensions fileDimensions){
     char tempString[fileDimensions.columns + 1]; 
     FILE *pFile = fopen(filename, "r");
     fseek(pFile, 0, SEEK_SET);
@@ -164,9 +164,9 @@ maze_map fileToArray(char filename[], dimensions fileDimensions){
         strcpy(pArray[i], tempString);
     }
 
-    /*Create a maze_map structure, passing the start and end coords as default values of 0,0
+    /*Create a MazeMap structure, passing the start and end Coords as default values of 0,0
     We will change these values later in the mapBuilder function.*/
-    maze_map mazeMap;
+    MazeMap mazeMap;
     mazeMap.rows = fileDimensions.rows;
     mazeMap.columns = fileDimensions.columns;
     mazeMap.maze = pArray;
@@ -176,12 +176,12 @@ maze_map fileToArray(char filename[], dimensions fileDimensions){
     return mazeMap;
 }
 
-coord mapBuilder(maze_map map, coord player){
+Coord mapBuilder(MazeMap map, Coord player){
     /*All this function should do is iterate through every character in the 2D
     Char array until it finds an S and the same with the E, then alter the default
-    coord structs within the start and end members of map_maze*/
+    Coord structs within the start and end members of map_maze*/
 
-    /*It should then set the coordinates of the player to the start coordinates of the map*/
+    /*It should then set the Coordinates of the player to the start Coordinates of the map*/
     for (int y = 0; y < map.rows; y++){
         for(int x = 0; x < map.columns; x++){
             if (map.maze[y][x] == 'S'){
@@ -204,7 +204,7 @@ coord mapBuilder(maze_map map, coord player){
 /*This function prints the maze when the user inputs an "M"
 It should print the entire maze replacing the player position with an 'X'*/
 
-void printMaze(maze_map map, coord player){
+void printMaze(MazeMap map, Coord player){
     printf("\n");
     for(int i = 0; i < map.rows; i++){
         if (i == player.y){
@@ -225,8 +225,8 @@ void printMaze(maze_map map, coord player){
     printf("\n");
 }
 
-int checkMove(maze_map map, coord* player, char userInput){
-    /*This function gets a user input, and then looks at the 'coordinate' the user
+int checkMove(MazeMap map, Coord* player, char userInput){
+    /*This function gets a user input, and then looks at the 'Coordinate' the user
     wants to move to, it then checks the character stored in that,
     If it is '#', or out of bounds, inform the user and reject the input,
     If it is a ' ', allow the player to move there, end the game if it is an 'E'*/
@@ -354,13 +354,13 @@ int main(int argc, char* argv[]){
 
     if (argc == 2){
         //Any invalid inputs for the argument will already be handled by the validation function
-        dimensions fileDimensions;
+        Dimensions fileDimensions;
         int status = validation(argv[1], &fileDimensions);
-        coord playerChar;
+        Coord playerChar;
         char input = 'M';
 
         if (status == 0){
-            maze_map mazeMap = fileToArray(argv[1], fileDimensions);
+            MazeMap mazeMap = fileToArray(argv[1], fileDimensions);
             playerChar = mapBuilder(mazeMap, playerChar);
 
             while (checkMove(mazeMap, &playerChar, input) != 1){
