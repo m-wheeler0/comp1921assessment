@@ -30,6 +30,11 @@ typedef struct
     int columns;
 }dimensions;
 
+/*Validation function, gets the filename as a string and a reference to a dimensions struct which
+will be edited within the function for use in other functions
+
+Puts the file through multiple checks to ensure the maze is valid*/
+
 int validation(char filename[], dimensions* fileDimensions){
     /*In this function, the file which is imported is then iterated through, going through
     multiple checks to make sure the maze file is valid (row/column limits, invalid
@@ -41,8 +46,11 @@ int validation(char filename[], dimensions* fileDimensions){
     char c;
     int trailing;
     int actCharacters;
+    int sCount = 0;
+    int eCount = 0;
 
     if (pFile == NULL){
+        //Return a file error if it cannot be found/opened
         return 2;
     }
     else
@@ -50,6 +58,7 @@ int validation(char filename[], dimensions* fileDimensions){
         //First find out the dimensions of the file
 
         //This loop returns the number of columns in the file.
+        fseek(pFile, 0, SEEK_SET);
         int charCount = 0;
         while(fgetc(pFile) != '\n'){
             charCount ++;
@@ -93,16 +102,27 @@ int validation(char filename[], dimensions* fileDimensions){
             /*It would be better here to check if any of the characters do not match the allowed
             characters stated by the assignment {" ", "S", "E", "#"}, since we are checking every
             character anyway.*/
-            printf("%c", c);
             if(c != ' ' && c != 'S' && c != 'E' && c != '#' && c != '\n' && c != '\0'){
-                printf("Invalid character");
                 fclose(pFile);
                 return 3;
                 }
                 else{
+                    if(c == 'S'){
+                        sCount ++;
+                    }
+                    else if(c == 'E'){
+                        eCount ++;
+                    }
                     actCharacters++;
                 }
             }
+
+        //If sCount or eCount are not equal to 1, reject maze as too many start or/and end points
+
+        if (sCount != 1 || eCount != 1){
+            return 3;
+        }
+
 
         /*The final check to do before returning the 2D Array of characters is to make sure the dimensions
         are within bounds > 5 AND < 100 for both.*/
@@ -119,18 +139,22 @@ int validation(char filename[], dimensions* fileDimensions){
                 return 0;
             }
             else{
-                printf("%d\n",actCharacters);
-                printf("%d",((charCount * rowCount) + (rowCount - 1)));
                 return 3;
             }
         }
     }
 }
 
+/*Read the file, and store it into a two dimensional array of characters like a grid
+return a maze_map struct of the maze containing rows, columns and default coord structs for the
+start and end characters to be operated on in the mapBuilder function*/
+
 maze_map fileToArray(char filename[], dimensions fileDimensions){
     char tempString[fileDimensions.columns + 1]; 
     FILE *pFile = fopen(filename, "r");
     fseek(pFile, 0, SEEK_SET);
+
+    //Allocate memory for the array, it will be used and processed frequently
 
     char** pArray = (char**) malloc(sizeof(char*) * fileDimensions.rows);
 
@@ -138,13 +162,6 @@ maze_map fileToArray(char filename[], dimensions fileDimensions){
         pArray[i] = malloc(sizeof(char) * (fileDimensions.columns + 1));
         fgets(tempString, sizeof(tempString) + 1, pFile);
         strcpy(pArray[i], tempString);
-    }
-
-    /*Check the last character in the array, if it is a newline character (\n), then
-    remove it*/
-
-    if (pArray[fileDimensions.rows - 1][fileDimensions.columns - 1] == '\n'){
-        pArray[fileDimensions.rows - 1][fileDimensions.columns - 1] = '\0';
     }
 
     /*Create a maze_map structure, passing the start and end coords as default values of 0,0
@@ -161,7 +178,8 @@ maze_map fileToArray(char filename[], dimensions fileDimensions){
 
 coord mapBuilder(maze_map map, coord player){
     /*All this function should do is iterate through every character in the 2D
-    Char array until it finds an S and the same with the E*/
+    Char array until it finds an S and the same with the E, then alter the default
+    coord structs within the start and end members of map_maze*/
 
     /*It should then set the coordinates of the player to the start coordinates of the map*/
     for (int y = 0; y < map.rows; y++){
@@ -183,9 +201,10 @@ coord mapBuilder(maze_map map, coord player){
     return player;
 }
 
+/*This function prints the maze when the user inputs an "M"
+It should print the entire maze replacing the player position with an 'X'*/
+
 void printMaze(maze_map map, coord player){
-    /*This function prints the maze when the user inputs an "M"
-    It should print the entire maze replacing the player position with an 'X'*/
     printf("\n");
     for(int i = 0; i < map.rows; i++){
         if (i == player.y){
@@ -209,8 +228,8 @@ void printMaze(maze_map map, coord player){
 int checkMove(maze_map map, coord* player, char userInput){
     /*This function gets a user input, and then looks at the 'coordinate' the user
     wants to move to, it then checks the character stored in that,
-    If it is '#', or a new line or EOF, inform the user and reject the input,
-    If it is a ' ', allow the player to move there*/
+    If it is '#', or out of bounds, inform the user and reject the input,
+    If it is a ' ', allow the player to move there, end the game if it is an 'E'*/
 
     //This variable stores the character it wants to move to
     char futurePos;
@@ -237,7 +256,7 @@ int checkMove(maze_map map, coord* player, char userInput){
             }
         }
         else{
-            printf("Trying to move out of bounds");
+            printf("Trying to move out of bounds\n");
         }
     }
 
@@ -264,7 +283,7 @@ int checkMove(maze_map map, coord* player, char userInput){
             }
         }
         else{
-            printf("Trying to move out of bounds\n\n");
+            printf("Trying to move out of bounds\n");
         }
     }
 
@@ -290,7 +309,7 @@ int checkMove(maze_map map, coord* player, char userInput){
             }
         }
         else{
-            printf("Trying to move out of bounds\n\n");
+            printf("Trying to move out of bounds\n");
         }
     }
 
@@ -303,9 +322,6 @@ int checkMove(maze_map map, coord* player, char userInput){
         
             if(futurePos == '#'){
                 printf("Cannot move into a wall\n");
-            }
-            else if(futurePos == '\n'|| futurePos == '\0' || player -> x == (map.columns - 1)){
-                printf("Attempting to move out of bounds\n");
             }
             else if (futurePos == ' ' || futurePos == 'S'){
                 player -> x = player -> x + 1;
