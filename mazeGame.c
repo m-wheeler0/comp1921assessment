@@ -96,6 +96,7 @@ int validation(char filename[], dimensions* fileDimensions){
             /*It would be better here to check if any of the characters do not match the allowed
             characters stated by the assignment {" ", "S", "E", "#"}, since we are checking every
             character anyway.*/
+            printf("%c", c);
             if(c != ' ' && c != 'S' && c != 'E' && c != '#' && c != '\n' && c != '\0'){
                 fclose(pFile);
                 return 3;
@@ -108,8 +109,8 @@ int validation(char filename[], dimensions* fileDimensions){
         /*The final check to do before returning the 2D Array of characters is to make sure the dimensions
         are within bounds > 5 AND < 100 for both.*/
 
-        if((rowCount < MIN_DIMENSION_VALUE) || (rowCount > MAX_DIMENSION_VALUE)
-        ||(charCount < MIN_DIMENSION_VALUE + 1) || (charCount > MAX_DIMENSION_VALUE + 1)){
+        if((fileDimensions -> rows < MIN_DIMENSION_VALUE) || (fileDimensions -> rows > MAX_DIMENSION_VALUE)
+        ||(fileDimensions -> columns < MIN_DIMENSION_VALUE + 1) || (fileDimensions -> columns > MAX_DIMENSION_VALUE + 1)){
             return 3;
         }
         else{
